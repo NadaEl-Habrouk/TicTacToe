@@ -275,6 +275,39 @@ public class TacTicToeServer {
 
         gameFrame.setVisible(true);
     }
+    private static boolean checkForDraw(JButton[][] buttons) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (buttons[i][j].getText().isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static void resetGame(JButton[][] buttons) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j].setText("");
+                buttons[i][j].setEnabled(true); // Enable the button
+
+            }
+        }
+        playerXTurn = true;
+    }
+
+    private static void computerMove(JButton[][] buttons) {
+        // Add logic for computer's move
+        Random rand = new Random();
+        int row, col;
+        do {
+            row = rand.nextInt(BOARD_SIZE);
+            col = rand.nextInt(BOARD_SIZE);
+        } while (!buttons[row][col].isEnabled());
+        buttons[row][col].setText(PLAYER_O);
+        buttons[row][col].setEnabled(false);
+    }
     private static String selectOpponent() {
         if (onlinePlayers.isEmpty()) {
             JOptionPane.showMessageDialog(gameFrame, "No players found online.");
