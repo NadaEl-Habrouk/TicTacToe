@@ -212,6 +212,55 @@ public class TacTicToeClient {
         multiPlayerButton.setForeground(Color.WHITE);
 
         gameFrame.setVisible(true);
+            private void resetGame() {
+        resetBoard();
+        isGameOver = false;
+        isGameStarted = false;
+        isPlayerXTurn = true;
+        messageLabel.setText("Player X's Turn");
+    }
+
+    private void restartGame() {
+        resetGame();
+        out.println("Restart");
+    }
+private boolean checkWinner() {
+        // Check rows, columns, and diagonals for a winner
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            // Check rows
+            if (checkRowCol(board[i][0], board[i][1], board[i][2])) {
+                return true;
+            }
+            // Check columns
+            if (checkRowCol(board[0][i], board[1][i], board[2][i])) {
+                return true;
+            }
+        }
+        // Check diagonals
+        if (checkRowCol(board[0][0], board[1][1], board[2][2])) {
+            return true;
+        }
+        if (checkRowCol(board[0][2], board[1][1], board[2][0])) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean checkRowCol(int c1, int c2, int c3) {
+        return (c1 != 0) && (c1 == c2) && (c2 == c3);
+    }
+
+    private boolean checkDraw() {
+        // Check if all cells are filled
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j] == 0) {
+                    return false; // If any cell is empty, not a draw
+                }
+            }
+        }
+        return true; // All cells are filled, it's a draw
+    }
 
     }
 
