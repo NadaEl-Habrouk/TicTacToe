@@ -215,6 +215,83 @@ public class TacTicToeServer {
  private static class loginFrame {
         // Implement the dispose method to properly dispose of resources
 
-    }   
+    } 
+        private static void openGameWindow() {
+        JFrame gameFrame = new JFrame("TicTacToe Game");
+        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gameFrame.setSize(400, 400);
+        gameFrame.setLocationRelativeTo(null);
+
+        JPanel gamePanel = new JPanel(null); // Use null layout to set button bounds manually
+        gamePanel.setBackground(Color.decode("#BFBFB6")); // Add vertical gap of 10 between components
+
+        // Add label with text "Hello To TicTacToe Game" and set its foreground color
+        JLabel titleLabel = new JLabel("TicTacToe Game");
+        titleLabel.setForeground(Color.WHITE); // Set foreground color to white
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center align the text
+        titleLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 20)); // Set font and size
+        titleLabel.setBounds(50, 20, 300, 30); // Set bounds for the label
+        gamePanel.add(titleLabel);
+
+        JButton singlePlayerButton = new JButton("Single Player");
+        singlePlayerButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12)); // Set font and size for button text
+        singlePlayerButton.setFocusable(false); // Remove focus border
+        singlePlayerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openSinglePlayerGameWindow(); // Open single-player game window
+            }
+        });
+        singlePlayerButton.setBounds(125, 70, 150, 30); // Set bounds for the button
+
+        JButton multiPlayerButton = new JButton("Multiplayer");
+        multiPlayerButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12)); // Set font and size for button text
+        multiPlayerButton.setFocusable(false); // Remove focus border
+        multiPlayerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String opponent = selectOpponent();
+                if (opponent != null) {
+                    // Establish connection with opponent
+                    connectToOpponent(opponent);
+                }
+            }
+        });
+        multiPlayerButton.setBounds(125, 120, 150, 30); // Set bounds for the button
+
+        gamePanel.add(singlePlayerButton);
+        gamePanel.add(multiPlayerButton);
+
+        gameFrame.add(gamePanel);
+
+        // Set background color of buttons
+        singlePlayerButton.setBackground(Color.decode("#9E9E96"));
+        multiPlayerButton.setBackground(Color.decode("#9E9E96"));
+
+        // Set foreground color of the buttons to match the label color in the login
+        Color labelColor = UIManager.getColor("Label.foreground");
+        singlePlayerButton.setForeground(Color.WHITE);
+        multiPlayerButton.setForeground(Color.WHITE);
+
+        gameFrame.setVisible(true);
+    }
+    private static String selectOpponent() {
+        if (onlinePlayers.isEmpty()) {
+            JOptionPane.showMessageDialog(gameFrame, "No players found online.");
+            return null; // Return null if no players are found
+        }
+        Object[] options = onlinePlayers.toArray();
+        String opponent = (String) JOptionPane.showInputDialog(
+                gameFrame,
+                "Select an opponent to play with:",
+                "Select Opponent",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                null);
+
+        return opponent;
+    }
+
 }
 
