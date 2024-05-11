@@ -3,17 +3,17 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 
-package tactictoe;
+package tictactoe;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
-/**
- *
- * @author nodys
- */
-public class TacTicToeClient {
+import java.util.Random;
+
+public class TicTacToeClient extends JFrame implements ActionListener {
+
     private static final int PORT = 12346;
     private static final String SERVER_IP = "localhost"; // Change to server IP if different
     private static final int BOARD_SIZE = 3;
@@ -34,10 +34,12 @@ public class TacTicToeClient {
     private boolean isGameOver;
     private boolean isGameStarted;
     private int[][] board;
-    
-     //private ServerListener serverListener;
-    
-     /*public TicTacToeClient() {
+
+
+    private ServerListener serverListener;
+
+
+    public TicTacToeClient() {
         connectToServer();
         showLoginWindow();
         serverListener = new ServerListener();
@@ -55,9 +57,12 @@ public class TacTicToeClient {
             System.exit(1);
         }
     }
-*/
 
-     private void showLoginWindow() {
+    private void sendPlayerInfo(String email) {
+        out.println("PlayerInfo:" + email);
+    }
+
+    private void showLoginWindow() {
         JFrame loginFrame = new JFrame(" Client Login");
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         loginFrame.setSize(600, 600);
@@ -134,7 +139,7 @@ public class TacTicToeClient {
                 isLoggedIn = true;
                 sendPlayerInfo(email); // Send player's information to the server
                 loginFrame.dispose();
-                //openGameWindow();
+                openGameWindow();
             }
 
             private boolean isValidEmail(String email) {
@@ -147,10 +152,21 @@ public class TacTicToeClient {
         loginFrame.add(loginPanel);
         loginFrame.setVisible(true);
     }
-      private void sendPlayerInfo(String email) {
-        out.println("PlayerInfo:" + email);                  
+
+    private void displayWinningVideo() {
+        try {
+            // Get the URI of the video file in the resources folder
+            URI videoURI = getClass().getResource("/resources/winning_video.mp4").toURI();
+
+            // Open the video file with the default media player
+            Desktop.getDesktop().browse(videoURI);
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error displaying winning video.");
+        }
     }
-        private void openGameWindow() {
+
+    private void openGameWindow() {
         JFrame gameFrame = new JFrame("TicTacToe Game Client");
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameFrame.setSize(400, 400); // Decreased size for smaller buttons and label
@@ -212,7 +228,161 @@ public class TacTicToeClient {
         multiPlayerButton.setForeground(Color.WHITE);
 
         gameFrame.setVisible(true);
-            private void resetGame() {
+
+    }
+
+    private class ServerListener implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                String message;
+                while ((message = in.readLine()) != null) {
+                    // Handle messages from the server
+                    if (message.startsWith("Online Players: ")) {
+                        String[] players = message.substring(16).split(", ");
+                        // Show a dialog with the list of online players
+                        showOnlinePlayersDialog(players);
+                    } else {
+                        // Handle other messages from the server
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void showOnlinePlayersDialog(String[] players) {
+        JFrame dialogFrame = new JFrame("Online Players");
+        dialogFrame.setSize(300, 200);
+        dialogFrame.setLocationRelativeTo(null);
+
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String player : players) {
+            model.addElement(player);
+        }
+
+        JList<String> playerList = new JList<>(model);
+        playerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(playerList);
+        dialogFrame.add(scrollPane);
+
+        JButton selectButton = new JButton("Select Player");
+        selectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedPlayer = playerList.getSelectedValue();
+                if (selectedPlayer != null) {
+                    // You can do something with the selected player here
+                    JOptionPane.showMessageDialog(dialogFrame, "You selected: " + selectedPlayer);
+                    dialogFrame.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(dialogFrame, "Please select a player.");
+                }
+            }
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(selectButton);
+        dialogFrame.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialogFrame.setVisible(true);
+    }
+    
+
+
+    private void initializeGame() {
+        setTitle("Tic Tac Toe (Client)");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Set background color
+        getContentPane().setBackground(Color.decode("#6D6D3D"));
+
+        JPanel boardPanel = new JPanel();
+        boardPanel.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+        buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j] = new JButton();
+                buttons[i][j].setFont(new Font(Font.SANS_SERIF, Font.BOLD, 100));
+                buttons[i][j].addActionListener(this);
+                buttons[i][j].setBackground(Color.decode("#BFBFB6")); // Set background color
+                buttons[i][j].setForeground(Color.WHITE); // Set foreground color
+                boardPanel.add(buttons[i][j]);
+                buttons[i][j].setFocusable(false); // Remove focus border for buttons
+
+            }
+        }
+        add(boardPanel, BorderLayout.CENTER);
+
+        JPanel messagePanel = new JPanel();
+        messageLabel = new JLabel("Player X's Turn");
+        messageLabel = new JLabel("Waiting for server...");
+
+        messageLabel = new JLabel("The Game");
+        messageLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24)); // Set font size
+        messageLabel.setForeground(Color.WHITE); // Set foreground color
+        messageLabel.setForeground(Color.WHITE); // Set foreground color
+        messagePanel.setBackground(Color.decode("#9E9E96")); // Set background color
+
+        messagePanel.add(messageLabel);
+        add(messagePanel, BorderLayout.SOUTH);
+
+        JButton restartButton = new JButton("Restart");
+        restartButton.setFocusable(false); // Remove focus border
+        restartButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                restartGame();
+            }
+        });
+        restartButton.setBackground(Color.decode("#9E9E96")); // Set background color
+        restartButton.setForeground(Color.WHITE); // Set foreground color
+        add(restartButton, BorderLayout.NORTH);
+
+        // Set the preferred size for the button
+        restartButton.setPreferredSize(new Dimension(120, 30)); // Adjust size as needed
+
+        // Add the button to the top panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Center align the button
+        topPanel.add(restartButton);
+
+        // Add the top panel to the frame
+        add(topPanel, BorderLayout.NORTH);
+
+        setSize(500, 500);
+        setLocationRelativeTo(null);
+        setVisible(true);
+
+        isPlayerXTurn = true;
+        isGameOver = false;
+        isGameStarted = false;
+        resetBoard();
+        waitForServerStart();
+        resetGame(); // Reset game state when initializing
+    }
+
+    private void resetBoard() {
+        board = new int[BOARD_SIZE][BOARD_SIZE]; // Initialize the board array
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j].setText("");
+                board[i][j] = 0;
+            }
+        }
+    }
+
+    private void waitForServerStart() {
+        if (!isGameStarted) {
+            // Display message only if the game has not started yet
+            messageLabel.setText("Waiting for server to start the game...");
+        }
+    }
+
+    private void resetGame() {
         resetBoard();
         isGameOver = false;
         isGameStarted = false;
@@ -224,7 +394,85 @@ public class TacTicToeClient {
         resetGame();
         out.println("Restart");
     }
-private boolean checkWinner() {
+
+    @Override
+public void actionPerformed(ActionEvent e) {
+    if (isGameOver) {
+        return; // If game is over, do nothing
+    }
+
+    JButton clickedButton = (JButton) e.getSource();
+    int row = -1, col = -1;
+
+    // Find the row and column of the clicked button
+    outerLoop:
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if (buttons[i][j] == clickedButton) {
+                row = i;
+                col = j;
+                break outerLoop;
+            }
+        }
+    }
+
+    if (row == -1 || col == -1) {
+        System.err.println("Error: Button not found.");
+        return;
+    }
+
+    if (board[row][col] != 0) {
+        // If the button is already clicked, do nothing
+        return;
+    }
+    
+
+    // Human player's turn
+    buttons[row][col].setText(PLAYER_X);
+    board[row][col] = 1; // Set board value to 1 for X
+
+    // Check if there is a winner after the human player's move
+    if (checkWinner()) {
+        messageLabel.setText("Player X wins!");
+        isGameOver = true;
+        displayWinningVideo();
+        return; // Exit actionPerformed() since the game is over
+    } else if (checkDraw()) {
+        messageLabel.setText("It's a draw!");
+        isGameOver = true;
+        return; // Exit actionPerformed() since the game is over
+    }
+
+    // Computer player's turn
+    computerMove(); // Let the computer make a move
+
+    // Check if there is a winner after the computer's move
+    if (checkWinner()) {
+        messageLabel.setText("Player O wins!");
+        isGameOver = true;
+        displayWinningVideo();
+    } else if (checkDraw()) {
+        messageLabel.setText("It's a draw!");
+        isGameOver = true;
+    }
+}
+    
+    private void computerMove() {
+    // Simulate computer's move (random move for demonstration)
+    Random rand = new Random();
+    int row, col;
+    do {
+        row = rand.nextInt(BOARD_SIZE);
+        col = rand.nextInt(BOARD_SIZE);
+    } while (board[row][col] != 0); // Keep generating random positions until an empty spot is found
+
+    // Set O on the button and update the board
+    buttons[row][col].setText(PLAYER_O);
+    board[row][col] = -1; // Set board value to -1 for O
+}
+
+
+    private boolean checkWinner() {
         // Check rows, columns, and diagonals for a winner
         for (int i = 0; i < BOARD_SIZE; i++) {
             // Check rows
@@ -262,7 +510,7 @@ private boolean checkWinner() {
         return true; // All cells are filled, it's a draw
     }
 
+    public static void main(String[] args) {
+        new TicTacToeClient();
     }
-
 }
-
