@@ -2,7 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
-package tactictoe;
+package tictactoe;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,26 +23,26 @@ import java.util.logging.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author nodys
- */
-public class TacTicToeServer {
+public class TicTacToeServer {
+
     private static final int PORT = 12346;
-     private static List<ClientHandler> clients = new ArrayList<>();
+    private static List<ClientHandler> clients = new ArrayList<>();
     private static List<String> onlinePlayers = new ArrayList<>();
+
     private static final int BOARD_SIZE = 3;
     private static final String PLAYER_X = "X";
     private static final String PLAYER_O = "O";
+
     private static boolean playerXTurn;
     private static JFrame loginFrame;
     private static JFrame gameFrame;
     private static JPanel gamePanel;
     private static JButton[][] buttons;
+
     private static Socket multiplayerSocket;
     private static PrintWriter multiplayerOut;
     private static BufferedReader multiplayerIn;
-    
+
     public static void main(String[] args) {
         // Call showLoginWindow() directly when the server starts
         showLoginWindow();
@@ -59,7 +60,12 @@ public class TacTicToeServer {
             e.printStackTrace();
         }
     }
-     static class ClientHandler extends Thread {
+
+    private static void handleMultiplayerMove(String message) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    static class ClientHandler extends Thread {
 
         private Socket socket;
         private PrintWriter out;
@@ -96,7 +102,7 @@ public class TacTicToeServer {
                     System.out.println("Received from client " + playerName + ": " + message);
                     if (message.startsWith("START_GAME_WITH:")) {
                         String opponent = message.substring(16);
-                       // startMultiplayerGame(opponent);
+                        startMultiplayerGame(opponent);
                         break;
                     }
                 }
@@ -132,8 +138,8 @@ public class TacTicToeServer {
             out.println(playerList.toString());
         }
     }
-    
- private static void showLoginWindow() {
+
+    private static void showLoginWindow() {
         loginFrame = new JFrame("Server Login"); // Assign to the static variable
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         loginFrame.setSize(600, 600);
@@ -199,7 +205,7 @@ public class TacTicToeServer {
                 // Proceed with login (dummy authentication for demonstration)
                 boolean isLoggedIn = true;
                 loginFrame.dispose();
-                //openGameWindow();
+                openGameWindow();
             }
 
             private boolean isValidEmail(String email) {
@@ -212,11 +218,8 @@ public class TacTicToeServer {
         loginFrame.add(loginPanel);
         loginFrame.setVisible(true);
     }
- private static class loginFrame {
-        // Implement the dispose method to properly dispose of resources
 
-    } 
-        private static void openGameWindow() {
+    private static void openGameWindow() {
         JFrame gameFrame = new JFrame("TicTacToe Game");
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameFrame.setSize(400, 400);
@@ -275,6 +278,153 @@ public class TacTicToeServer {
 
         gameFrame.setVisible(true);
     }
+
+    private static void openSinglePlayerGameWindow() {
+        // Close the current frame
+        loginFrame.dispose(); // Dispose of the login frame
+
+        JFrame singlePlayerGameFrame = new JFrame("Single Player Game");
+        singlePlayerGameFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        singlePlayerGameFrame.setSize(500, 500);
+        singlePlayerGameFrame.setLocationRelativeTo(null);
+
+        JPanel gamePanel = new JPanel(new GridLayout(3, 3));
+        gamePanel.setBackground(Color.WHITE);
+
+        // Initialize buttons for the game grid
+        JButton[][] buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j] = new JButton();
+                buttons[i][j].setFont(new Font(Font.SANS_SERIF, Font.BOLD, 100));
+                buttons[i][j].setBackground(Color.decode("#BFBFB6")); // Set background color
+                buttons[i][j].setForeground(Color.WHITE); // Set foreground color to white
+                buttons[i][j].setFocusable(false); // Remove focus border for buttons
+
+                gamePanel.add(buttons[i][j]);
+            }
+        }
+
+        // Initialize a label to display game status
+        JLabel statusLabel = new JLabel("Your Turn");
+        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        statusLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 20));
+        statusLabel.setForeground(Color.WHITE); // Set text color to white
+        statusLabel.setOpaque(true); // Make the label opaque
+        statusLabel.setBackground(Color.decode("#9E9E96")); // Set background color to gray
+
+        // Add action listeners to buttons
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                final int row = i;
+                final int col = j;
+                buttons[i][j].addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // Handle button click
+                        buttons[row][col].setText(PLAYER_X); // Update button text to X
+                        buttons[row][col].setEnabled(false); // Disable button after click
+                        if (checkForWin(buttons, PLAYER_X)) {
+                            statusLabel.setText("X Win!");
+                            try {
+                                displayWinningVideo(loginFrame);
+                            } catch (URISyntaxException ex) {
+                                Logger.getLogger(TicTacToeServer.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            disableAllButtons(buttons);
+                        } else if (checkForDraw(buttons)) {
+                            statusLabel.setText("It's a Draw!");
+                            disableAllButtons(buttons);
+                        } else {
+                            computerMove(buttons);
+                            if (checkForWin(buttons, PLAYER_O)) {
+                                statusLabel.setText("O Wins!");
+                                try {
+                                    displayWinningVideo(loginFrame);
+                                } catch (URISyntaxException ex) {
+                                    Logger.getLogger(TicTacToeServer.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                                disableAllButtons(buttons);
+                            } else if (checkForDraw(buttons)) {
+                                statusLabel.setText("It's a Draw!");
+                                disableAllButtons(buttons);
+                            } else {
+                                statusLabel.setText("Your Turn");
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize restart button
+        JButton restartButton = new JButton("Restart");
+        restartButton.setFocusable(false); // Remove focus border
+        restartButton.setBackground(Color.decode("#9E9E96")); // Set background color
+        restartButton.setForeground(Color.WHITE); // Set foreground color
+
+        restartButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetGame(buttons); // Reset the game
+                statusLabel.setText("Your Turn"); // Reset status label
+            }
+        });
+
+        // Set layout for the game window
+        singlePlayerGameFrame.setLayout(new BorderLayout());
+        singlePlayerGameFrame.add(gamePanel, BorderLayout.CENTER);
+        singlePlayerGameFrame.add(statusLabel, BorderLayout.SOUTH);
+        singlePlayerGameFrame.add(restartButton, BorderLayout.NORTH);
+        // Add restart button
+
+        singlePlayerGameFrame.setVisible(true);
+    }
+
+    private static void displayWinningVideo(Component parentComponent) throws URISyntaxException {
+        try {
+            // Get the URI of the video file in the resources folder
+            URI videoURI = TicTacToeServer.class.getResource("/resources/winning_video.mp4").toURI();
+
+            // Open the video file with the default media player
+            Desktop.getDesktop().browse(videoURI);
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parentComponent, "Error displaying winning video.");
+        }
+    }
+
+    private static boolean checkForWin(JButton[][] buttons, String player) {
+        // Check rows
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            if (buttons[i][0].getText().equals(player)
+                    && buttons[i][1].getText().equals(player)
+                    && buttons[i][2].getText().equals(player)) {
+                return true;
+            }
+        }
+        // Check columns
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if (buttons[0][j].getText().equals(player)
+                    && buttons[1][j].getText().equals(player)
+                    && buttons[2][j].getText().equals(player)) {
+                return true;
+            }
+        }
+        // Check diagonals
+        if (buttons[0][0].getText().equals(player)
+                && buttons[1][1].getText().equals(player)
+                && buttons[2][2].getText().equals(player)) {
+            return true;
+        }
+        if (buttons[0][2].getText().equals(player)
+                && buttons[1][1].getText().equals(player)
+                && buttons[2][0].getText().equals(player)) {
+            return true;
+        }
+        return false;
+    }
+
     private static boolean checkForDraw(JButton[][] buttons) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
@@ -308,6 +458,21 @@ public class TacTicToeServer {
         buttons[row][col].setText(PLAYER_O);
         buttons[row][col].setEnabled(false);
     }
+
+    private static void disableAllButtons(JButton[][] buttons) {
+        // Disable all buttons
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j].setEnabled(false);
+            }
+        }
+    }
+
+    private static class loginFrame {
+        // Implement the dispose method to properly dispose of resources
+
+    }
+
     private static String selectOpponent() {
         if (onlinePlayers.isEmpty()) {
             JOptionPane.showMessageDialog(gameFrame, "No players found online.");
@@ -326,5 +491,88 @@ public class TacTicToeServer {
         return opponent;
     }
 
+    private void openMultiplayerGameWindow(Socket socket, PrintWriter out, BufferedReader in) {
+        // Implement the logic to open the multiplayer game window
+        // You can reuse some of the existing code from the single-player game window
+        // But modify it to handle multiplayer interactions
+    }
+
+    private static void startMultiplayerGame(String opponent) {
+        // Create game frame and panel
+        gameFrame = new JFrame("Tic Tac Toe");
+        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gameFrame.setSize(300, 300);
+
+        gamePanel = new JPanel(new GridLayout(3, 3));
+
+        buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j] = new JButton("");
+                buttons[i][j].setFont(new Font("Arial", Font.BOLD, 48));
+                buttons[i][j].addActionListener(new ButtonClickListener(i, j));
+                gamePanel.add(buttons[i][j]);
+            }
+        }
+
+        gameFrame.add(gamePanel);
+        gameFrame.setVisible(true);
+    }
+    
+    private static void connectToOpponent(String opponent) {
+            try {
+                multiplayerSocket = new Socket("localhost", PORT); // Replace "localhost" with the IP of the opponent
+                multiplayerOut = new PrintWriter(multiplayerSocket.getOutputStream(), true);
+                multiplayerIn = new BufferedReader(new InputStreamReader(multiplayerSocket.getInputStream()));
+
+                multiplayerOut.println("START_GAME_WITH:" + opponent);
+
+                String message;
+                while ((message = multiplayerIn.readLine()) != null) {
+                    if (message.startsWith("MOVE:")) {
+                        handleMultiplayerMove(message);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    static class ButtonClickListener implements ActionListener {
+
+        private int row;
+        private int col;
+
+        public ButtonClickListener(int row, int col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Handle button click
+            JButton button = (JButton) e.getSource();
+            button.setText(PLAYER_X); // Update button text to X
+            button.setEnabled(false); // Disable button after click
+            // Send move to opponent
+            multiplayerOut.println("MOVE:" + row + "," + col);
+            // Check for win or draw
+            // (Implement win/draw check logic here)
+        }
+
+        private static  void handleMultiplayerMove(String move) {
+            String[] parts = move.split(":");
+            if (parts.length == 2 && parts[0].equals("MOVE")) {
+                String[] coordinates = parts[1].split(",");
+                int row = Integer.parseInt(coordinates[0]);
+                int col = Integer.parseInt(coordinates[1]);
+                buttons[row][col].setText(PLAYER_O);
+                buttons[row][col].setEnabled(false);
+            }
+        }
+    }
 }
 
+
+        
+    
